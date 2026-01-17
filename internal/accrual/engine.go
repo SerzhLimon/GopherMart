@@ -6,6 +6,7 @@ import (
 	m "github.com/SerzhLimon/GopherMart/internal/models_accrual"
 	repo "github.com/SerzhLimon/GopherMart/internal/repository_accrual"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type AccrualEngine struct {
@@ -36,30 +37,76 @@ func (p *AccrualEngine) RegisterOrderForProcessing(order m.Order) {
 }
 
 func (e *AccrualEngine) StartProcessing(ctx context.Context) {
-	// newOrders, err := e.repo.GetOrdersForProcessing()
-	// if err != nil {
-	// 	log.Error().
-	// 		Err(err).
-	// 		Msg("cant fetch orders for processing")
-	// }
+	newOrders, err := e.repo.GetOrdersForProcessing()
+	if err != nil {
+		logrus.Warn("cant fetch orders for processing")
+	}
 
-	// for _, newOrder := range newOrders {
-	// 	log.Debug().Int("order_id", newOrder.ID).Msg("start processing order")
-	// 	go p.AddAccrualForOrder(ctx, newOrder)
-	// }
+	for _, newOrder := range newOrders {
+		go e.AddAccrualForOrder(ctx, newOrder)
+	}
 
-	// for {
-	// 	select {
-	// 	case <-ctx.Done():
-	// 		// when context is canceled, we will signal all senders that they should stop
-	// 		// sending orders to channel, because we won't process them anymore
-	// 		close(p.stopCh)
-	// 		log.Debug().Msg("stop receiving orders to process")
-	// 		return
-	// 	case orderToProcess := <-p.ordersToProcessCh:
-	// 		log.Debug().Int("order_id", orderToProcess.ID).Msg("received order to process")
-	// 		go p.AddAccrualForOrder(ctx, orderToProcess)
+	for {
+		select {
+		case <-ctx.Done():
+			close(e.stopCh)
+			return
+		case orderToProcess := <-e.ordersToProcessCh:
+			go e.AddAccrualForOrder(ctx, orderToProcess)
 
-	// 	}
-	// }
+		}
+	}
+}
+
+func (e *AccrualEngine) AddAccrualForOrder(ctx context.Context, order m.Order) {
+	err := e.repo.ChangeStatus(order.ID, m.OrderStatusProcessing)
+	if err != nil {
+		logrus.Error(err, "failed to change status order", order.ID)
+		e.markOrderAsFailed(order)
+		return
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	results := make([]float64, len(order.Items))
+
+	for i, orderItem := range order.Items {
+		i, orderItem := i, orderItem
+		g.Go(func() error {
+			result, errCalculation := e.calculateAccrualForOrderItem(ctx, orderItem)
+			if errCalculation == nil {
+				results[i] = result
+			}
+			return errCalculation
+		})
+	}
+
+	if err = g.Wait(); err != nil {
+		logrus.Error("AddAccrualForOrder(). some of order items not calculated properly")
+		e.markOrderAsFailed(order)
+		return
+	}
+
+	totalAccrual := 0.0
+	for _, accrualForItem := range results {
+		totalAccrual += accrualForItem
+	}
+
+	err = e.repo.AddAccrual(order.ID, totalAccrual)
+	if err != nil {
+		logrus.Error(err, "failed to change status order", order.ID)
+		e.markOrderAsFailed(order)
+	}
+}
+
+func (e *AccrualEngine) markOrderAsFailed(order m.Order) {
+	err := e.repo.ChangeStatus(order.ID, m.OrderStatusError)
+	if err != nil {
+		logrus.Warn("failed to change status", order.ID)
+	}
+}
+
+func (e *AccrualEngine) calculateAccrualForOrderItem(_ context.Context, good m.Goods) (float64, error) {
+	matchingReward, err := e.repo.GetMatchingReward(good)
+	return matchingReward.CalculateReward(*good.Price), err
 }

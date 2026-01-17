@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	engine "github.com/SerzhLimon/GopherMart/internal/accrual"
 	m "github.com/SerzhLimon/GopherMart/internal/models_accrual"
 	repo "github.com/SerzhLimon/GopherMart/internal/repository_accrual"
-	engine "github.com/SerzhLimon/GopherMart/internal/accrual"
 )
 
 type UseCase interface {
@@ -27,7 +27,7 @@ func NewService(db *sql.DB) (UseCase, error) {
 
 	engine := engine.New(repo)
 	return &Usecase{
-		repo: repo,
+		repo:   repo,
 		engine: engine,
 	}, nil
 }
@@ -55,7 +55,15 @@ func (u *Usecase) CreateOrder(req *m.CreateOrderRequest) error {
 		}
 	}
 
-	return u.CreateOrder(req)
+	err = u.CreateOrder(req)
+	if err == nil {
+		order := m.Order{
+			Items: req.Goods,
+			ID:    *req.Order,
+		}
+		go u.engine.RegisterOrderForProcessing(order)
+	}
+	return err
 }
 
 func validate(good m.Goods) bool {
