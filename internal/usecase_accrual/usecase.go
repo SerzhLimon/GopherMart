@@ -1,6 +1,7 @@
 package usecase_accual
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -26,6 +27,7 @@ func NewService(db *sql.DB) (UseCase, error) {
 	}
 
 	engine := engine.New(repo)
+ 	go engine.StartProcessing(context.Background())
 	return &Usecase{
 		repo:   repo,
 		engine: engine,

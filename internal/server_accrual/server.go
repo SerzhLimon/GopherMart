@@ -33,13 +33,13 @@ func NewServer(cfg *config.Config, db *sql.DB) (*Server, error) {
 		cfg:  cfg,
 	}
 	server.route()
+
 	return server, nil
 }
 
 func (s *Server) route() {
 
-	// s.core.Post("/", s.SetURL)
-	// s.core.Post("/api/shorten", s.SetURLJson)
+	s.core.Post("/api/orders", s.CreateOrder)
 }
 
 func (s *Server) Run() {

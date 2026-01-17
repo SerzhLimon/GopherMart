@@ -37,6 +37,7 @@ func (p *AccrualEngine) RegisterOrderForProcessing(order m.Order) {
 }
 
 func (e *AccrualEngine) StartProcessing(ctx context.Context) {
+	logrus.Info("engine running ...")
 	newOrders, err := e.repo.GetOrdersForProcessing()
 	if err != nil {
 		logrus.Warn("cant fetch orders for processing")

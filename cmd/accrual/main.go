@@ -46,7 +46,6 @@ func main() {
 		quit <- syscall.SIGTERM
 	}()
 
-	// Ожидание сигнала завершения
 	sig := <-quit
 	logrus.Infof("Received signal: %v", sig)
 }
