@@ -28,14 +28,25 @@ const (
 			order_number VARCHAR(255) NOT NULL UNIQUE
 		);
 	`
+	createTableAccrual = `
+		create table if not exists accrual_orders(
+		id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		order_number VARCHAR(255) NOT NULL UNIQUE
+		status VARCHAR(255) NOT NULL,
+		accrual NUMERIC(10, 2),
+	`
 	dropTableCatalog = `
 		DROP TABLE IF EXISTS catalog;
 	`
 	dropTableOrders = `
 		DROP TABLE IF EXISTS orders;
 	`
+	dropTableAccrual = `
+		DROP TABLE IF EXISTS accrual_orders;
+	`
 
 	dropEnum = `
 		DROP TYPE IF EXISTS discount_type;
 	`
+
 )

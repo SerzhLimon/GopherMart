@@ -7,6 +7,7 @@ import (
 
 	m "github.com/SerzhLimon/GopherMart/internal/models_accrual"
 	repo "github.com/SerzhLimon/GopherMart/internal/repository_accrual"
+	engine "github.com/SerzhLimon/GopherMart/internal/accrual"
 )
 
 type UseCase interface {
@@ -14,7 +15,8 @@ type UseCase interface {
 }
 
 type Usecase struct {
-	repo repo.Repository
+	repo   repo.Repository
+	engine *engine.AccrualEngine
 }
 
 func NewService(db *sql.DB) (UseCase, error) {
@@ -23,8 +25,10 @@ func NewService(db *sql.DB) (UseCase, error) {
 		return nil, fmt.Errorf("fail to init repo")
 	}
 
+	engine := engine.New(repo)
 	return &Usecase{
 		repo: repo,
+		engine: engine,
 	}, nil
 }
 
@@ -47,7 +51,7 @@ func (u *Usecase) CreateOrder(req *m.CreateOrderRequest) error {
 
 	for _, good := range req.Goods {
 		if !validate(good) {
-			return  errors.New("uc.CreateOrder() incorrect good data")
+			return errors.New("uc.CreateOrder() incorrect good data")
 		}
 	}
 

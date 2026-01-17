@@ -30,6 +30,11 @@ func Up(db *sql.DB) error {
 		return err
 	}
 
+	if _, err := tx.Exec(createTableAccrual); err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	if err = tx.Commit(); err != nil {
 		tx.Rollback()
 		return err
@@ -54,6 +59,11 @@ func Down(db *sql.DB) error {
 	}
 
 	if _, err := tx.Exec(dropTableOrders); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(dropTableAccrual); err != nil {
 		tx.Rollback()
 		return err
 	}

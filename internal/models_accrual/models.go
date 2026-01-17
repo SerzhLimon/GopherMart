@@ -10,4 +10,9 @@ type Goods struct {
 	Price       *float64 `json:"price"`
 }
 
-
+type Order struct {
+	Items     []Goods
+	ID        string
+	Status    OrderStatus
+	Accrual   float64
+}

@@ -26,6 +26,7 @@ func NewServer(cfg *config.Config, db *sql.DB) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	server := &Server{
 		core: chi.NewRouter(),
 		uc:   uc,
