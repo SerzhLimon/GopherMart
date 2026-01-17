@@ -8,7 +8,7 @@ import (
 	config "github.com/SerzhLimon/GopherMart/internal/config_accrual"
 	db "github.com/SerzhLimon/GopherMart/internal/config_accrual/db"
 	server "github.com/SerzhLimon/GopherMart/internal/server_accrual"
-	"github.com/SerzhLimon/GopherMart/migrations"
+	migrations "github.com/SerzhLimon/GopherMart/migrations_accrual"
 	"github.com/sirupsen/logrus"
 )
 

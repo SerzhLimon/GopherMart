@@ -3,6 +3,7 @@ package server_accrual
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -64,14 +65,23 @@ func (s *Server) CreateOrder(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "cannot read body", http.StatusBadRequest)
 		return
 	}
+	defer req.Body.Close()
 
-	var request m.CreateOrderRequest
+	var request *m.CreateOrderRequest
 	if err = json.Unmarshal(body, &request); err != nil {
 		logrus.Errorln(err)
 		http.Error(res, "cannot unmarshal body", http.StatusBadRequest)
 		return
 	}
-	
-	defer req.Body.Close()
 
+	status := http.StatusAccepted
+	err = s.uc.CreateOrder(request)
+	if err != nil {
+		if errors.Is(err, m.OrderAlreadyExists) {
+			status = http.StatusConflict
+		} else {
+			status = http.StatusBadRequest
+		}
+	}
+	res.WriteHeader(status)
 }

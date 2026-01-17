@@ -10,6 +10,7 @@ import (
 )
 
 type UseCase interface {
+	CreateOrder(req *m.CreateOrderRequest) error
 }
 
 type Usecase struct {
