@@ -5,9 +5,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/SerzhLimon/GopherMart/internal/config"
-	"github.com/SerzhLimon/GopherMart/internal/config/db"
-	"github.com/SerzhLimon/GopherMart/internal/server"
+	config "github.com/SerzhLimon/GopherMart/internal/config_accrual"
+	db "github.com/SerzhLimon/GopherMart/internal/config_accrual/db"
+	server "github.com/SerzhLimon/GopherMart/internal/server_accrual"
 	"github.com/SerzhLimon/GopherMart/migrations"
 	"github.com/sirupsen/logrus"
 )

@@ -1,4 +1,4 @@
-package db
+package db_accrual
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/SerzhLimon/GopherMart/internal/config"
+	config "github.com/SerzhLimon/GopherMart/internal/config_accrual"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
