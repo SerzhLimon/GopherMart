@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/SerzhLimon/GopherMart/internal/config"
 	"github.com/SerzhLimon/GopherMart/internal/config/db"
 	"github.com/SerzhLimon/GopherMart/internal/server"
@@ -26,14 +30,23 @@ func main() {
 		logrus.Info("Migrations applied successfully")
 	}
 	defer func() {
-		//save data
-		// migrations.Down(psql)
-		// logrus.Info("Migrations down")
+		migrations.Down(psql)
+		logrus.Info("Migrations down")
 	}()
 
 	s, err := server.NewServer(cfg, psql)
 	if err != nil {
 		logrus.Fatalln(err)
 	}
-	s.Run()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s.Run()
+		quit <- syscall.SIGTERM
+	}()
+
+	// Ожидание сигнала завершения
+	sig := <-quit
+	logrus.Infof("Received signal: %v", sig)
 }

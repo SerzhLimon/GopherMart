@@ -25,18 +25,17 @@ const (
 			id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 			description VARCHAR(255) NOT NULL UNIQUE,
 			price NUMERIC(10, 2),
-			order_number description VARCHAR(255) NOT NULL UNIQUE
+			order_number VARCHAR(255) NOT NULL UNIQUE
 		);
 	`
 	dropTableCatalog = `
 		DROP TABLE IF EXISTS catalog;
 	`
-
 	dropTableOrders = `
 		DROP TABLE IF EXISTS orders;
 	`
 
 	dropEnum = `
-		DROP ENUM IF EXISTS discount_type;
+		DROP TYPE IF EXISTS discount_type;
 	`
 )
