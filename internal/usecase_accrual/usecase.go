@@ -12,6 +12,7 @@ import (
 )
 
 type UseCase interface {
+	RunEngine(ctx context.Context)
 	CreateOrder(req *m.CreateOrderRequest) error
 }
 
@@ -27,11 +28,14 @@ func NewService(db *sql.DB) (UseCase, error) {
 	}
 
 	engine := engine.New(repo)
- 	go engine.StartProcessing(context.Background())
 	return &Usecase{
 		repo:   repo,
 		engine: engine,
 	}, nil
+}
+
+func (u *Usecase) RunEngine(ctx context.Context) {
+	u.engine.StartProcessing(ctx)
 }
 
 func (u *Usecase) CreateOrder(req *m.CreateOrderRequest) error {

@@ -1,11 +1,11 @@
 package server_accrual
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 
 	config "github.com/SerzhLimon/GopherMart/internal/config_accrual"
@@ -42,11 +42,13 @@ func (s *Server) route() {
 	s.core.Post("/api/orders", s.CreateOrder)
 }
 
-func (s *Server) Run() {
+func (s *Server) RunEngine(ctx context.Context) {
+	s.uc.RunEngine(ctx)
+}
+
+func (s *Server) Run() error {
 	logrus.Infof("server started with params: host - %s", s.cfg.Opts.ServerHost)
-	if err := http.ListenAndServe(s.cfg.Opts.ServerHost, s.core); err != nil {
-		log.Fatalln(err)
-	}
+	return http.ListenAndServe(s.cfg.Opts.ServerHost, s.core)
 }
 
 func (s *Server) CreateOrder(res http.ResponseWriter, req *http.Request) {

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	config "github.com/SerzhLimon/GopherMart/internal/config_accrual"
 	db "github.com/SerzhLimon/GopherMart/internal/config_accrual/db"
@@ -19,13 +21,14 @@ func main() {
 	}
 	psql, err := db.InitPostgresClient(cfg)
 	if err != nil {
-		logrus.Warn(err)
+		logrus.Fatalln(err)
 	}
+	defer psql.Close()
 
 	logrus.Info("Running migrations...")
 	err = migrations.Up(psql)
 	if err != nil {
-		logrus.Warn(err)
+		logrus.Fatalln(err)
 	} else {
 		logrus.Info("Migrations applied successfully")
 	}
@@ -39,13 +42,28 @@ func main() {
 		logrus.Fatalln(err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go s.RunEngine(ctx)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	serverErr := make(chan error, 1)
 	go func() {
-		s.Run()
-		quit <- syscall.SIGTERM
+		if err := s.Run(); err != nil {
+			serverErr <- err
+		}
 	}()
 
-	sig := <-quit
-	logrus.Infof("Received signal: %v", sig)
+	select {
+	case <-quit:
+		logrus.Info("Shutdown signal received")
+	case err := <-serverErr:
+		logrus.WithError(err).Error("Server error occurred")
+	}
+
+	cancel()                           
+	time.Sleep(500 * time.Millisecond)
+
+	logrus.Info("Shutting down...")
 }
